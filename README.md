@@ -8,15 +8,15 @@ Built with **Python (Flask)**, **MySQL**, **JWT Authentication**, **Leaflet.js**
 
 ## ✨ Key Features
 
-- **🚨 3-Second Emergency SOS Trigger**: Hold the SOS button for 3 seconds (or use instant SOS) to capture live GPS coordinates and dispatch immediate alerts to up to 4 saved emergency contacts, with an option to broadcast a "Safe / SOS Cancelled" update[cite: 1, 3, 9].
+- **🚨 5-Second Buffer Emergency SOS Trigger**: Features a 5-second safety buffer countdown (to prevent accidental false alarms) before capturing live GPS coordinates and dispatching immediate alerts to up to 4 saved emergency contacts, with an option to broadcast a "Safe / SOS Cancelled" update[cite: 3, 9].
 - **🎤 Hands-Free Voice Activation**: Continuous browser-based speech recognition listens for emergency phrases (such as *"Help me"*) and automatically triggers the SOS protocol along with the captured voice transcript[cite: 1, 3, 9].
 - **📍 Live GPS Map & Safe-Zone Navigation**: Real-time location tracking powered by **Leaflet.js**, displaying exact coordinates, accuracy radius, and quick navigation to the nearest police station and safe zones[cite: 1, 19].
 - **🤖 Prahari AI Safety Assistant**: Embedded floating chatbot powered by **Google Gemini** (`gemini-3.5-flash-lite` with automatic fallback and retry resilience) providing calm, practical safety guidance and instant Indian emergency helpline numbers (`112`, `100`, `1091`)[cite: 3, 6].
-- **📩 Multi-Provider Alert Delivery (SMTP + Twilio + Offline Fallback)**:
-  - **SMTP Relay (Brevo / Gmail)**: Dispatches instant emergency email/gateway alerts containing live Google Maps links[cite: 3, 4].
-  - **Twilio SMS**: Sends real-time SMS alerts directly to emergency contacts[cite: 3, 9].
+- **📩 Multi-Provider Alert Delivery (Brevo SMTP + Twilio + Offline Fallback)**:
+  - **SMTP Relay (Brevo / Gmail)**: Primary zero-cost alert engine dispatching instant emergency alerts containing live Google Maps links[cite: 3, 4].
+  - **Twilio SMS**: Optional plug-and-play SMS integration for direct carrier messaging[cite: 3, 9].
   - **Offline / Console Fallback**: Prints alerts in the server console for local testing or opens the device's native SMS app pre-filled when offline[cite: 4, 9].
-- **🔐 Secure PIN & JWT Authentication**: Passwords/PINs are hashed with `Flask-Bcrypt`, and protected API routes use `Flask-JWT-Extended` bearer tokens[cite: 3, 9].
+- **🔐 Secure PIN & JWT Authentication**: Login PINs are hashed with `Flask-Bcrypt`, and protected API routes use `Flask-JWT-Extended` bearer tokens[cite: 3, 9].
 - **👥 Emergency Contact Management**: Store up to 4 trusted contacts with relationship tags, primary contact prioritization, and automatic opt-in notification alerts when added[cite: 3, 9].
 
 ---
@@ -25,12 +25,12 @@ Built with **Python (Flask)**, **MySQL**, **JWT Authentication**, **Leaflet.js**
 
 | Layer | Technology |
 | :--- | :--- |
-| **Backend Framework** | Python 3, Flask, Flask-CORS |
-| **Database** | MySQL (`mysql-connector-python`) |
-| **Authentication & Security** | Flask-JWT-Extended (JWT), Flask-Bcrypt |
-| **AI Assistant** | Google Gemini API (Multi-model fallback & retry architecture) |
-| **Alert & Messaging Engine** | Python `smtplib` (Brevo/Gmail SMTP), Twilio REST API |
-| **Frontend & Maps** | HTML5, CSS3, Vanilla JavaScript, Leaflet.js, Web Speech API |
+| **Backend Framework** | Python 3, Flask, Flask-CORS[cite: 3] |
+| **Database** | MySQL (`mysql-connector-python`)[cite: 3] |
+| **Authentication & Security** | Flask-JWT-Extended (JWT), Flask-Bcrypt[cite: 3] |
+| **AI Assistant** | Google Gemini API (Multi-model fallback & retry architecture)[cite: 3] |
+| **Alert & Messaging Engine** | Python `smtplib` (Brevo/Gmail SMTP), Twilio REST API[cite: 3, 9] |
+| **Frontend & Maps** | HTML5, CSS3, Vanilla JavaScript, Leaflet.js, Web Speech API[cite: 3, 6, 9] |
 
 ---
 
@@ -43,7 +43,7 @@ Built with **Python (Flask)**, **MySQL**, **JWT Authentication**, **Leaflet.js**
 - `init_db.py` — Automated MySQL database and table setup script[cite: 12, 21]
 - `schema.sql` — Database schema (`users`, `contacts`, `sos_logs`)[cite: 10, 21]
 - `chat.js` — Floating Prahari AI Assistant widget and chat history UI[cite: 6, 21]
-- `prahari-v3 (1).html` — Main safety dashboard, Leaflet map, SOS button & voice listener[cite: 3, 21]
+- `prahari-v3 (1).html` — Main safety dashboard, Leaflet map, 5-second SOS buffer & voice listener[cite: 3, 21]
 - `test_sms.py` — CLI utility to test SMS/SMTP alert delivery[cite: 11, 21]
 - `requirements.txt` — Python dependencies[cite: 9, 21]
 - `logo.png` — Prahari brand logo[cite: 7, 21]
@@ -53,9 +53,10 @@ Built with **Python (Flask)**, **MySQL**, **JWT Authentication**, **Leaflet.js**
 ## ⚙️ How the System Works
 
 1. **Authentication Flow**: Users sign up with their profile details, 6-digit area PIN code, and numeric login PIN[cite: 3, 9]. The backend hashes the PIN with Bcrypt and issues a signed JWT stored in `localStorage` (`prahari_token`)[cite: 3, 6].
-2. **SOS Dispatch Pipeline**:
-   - Triggered via the **3-second SOS hold**, **SOS Now** button, or **Voice Trigger** (*"Help me"*)[cite: 1, 19].
-   - The frontend sends `latitude`, `longitude`, nearest police station info, and any voice `transcript` to `POST /api/sos/trigger`[cite: 3].
+2. **SOS Dispatch Pipeline (5-Second Buffer)**:
+   - Triggered via the **SOS** button or **Voice Trigger** (*"Help me"*)[cite: 1, 19].
+   - A **5-second buffer window** runs so users can cancel accidental activations before any alert is sent.
+   - Once the 5-second buffer completes, the frontend sends `latitude`, `longitude`, nearest police station info, and any voice `transcript` to `POST /api/sos/trigger`[cite: 3].
    - Flask retrieves the user's prioritized contacts from MySQL, formats a Google Maps link (`https://maps.google.com/?q=lat,lng`), dispatches alerts via `sms.py` (`SMTP` or `Twilio`), and records the incident in `sos_logs`[cite: 3, 10].
 3. **Resilient AI Chatbot (`POST /api/chat`)**:
    - `chat.js` sends the user's message and conversation history with the JWT token to `/api/chat`[cite: 3, 6].
@@ -70,7 +71,7 @@ Built with **Python (Flask)**, **MySQL**, **JWT Authentication**, **Leaflet.js**
 2. Click **Create API key** and select or create a Google Cloud project.
 3. Copy the generated key and paste it into `.env` as `GEMINI_API_KEY`[cite: 4].
 
-### 2. Brevo SMTP Credentials (For Free Email / Gateway Alerts — No 2FA Needed)
+### 2. Brevo SMTP Credentials (Primary Alert Engine — Free, No 2FA Needed)
 1. Create a free account at **[Brevo](https://www.brevo.com)** (includes 300 free alerts/day).
 2. Click your profile name in the top-right corner → **SMTP & API** → open the **SMTP** tab[cite: 16].
 3. Copy your **Login** (e.g., `xxxxxxx@smtp-brevo.com`) into `SMTP_USER`[cite: 4].
@@ -123,7 +124,7 @@ Built with **Python (Flask)**, **MySQL**, **JWT Authentication**, **Leaflet.js**
 | `GET` | `/api/contacts` | JWT | List saved emergency contacts (max 4)[cite: 3, 9] |
 | `POST` | `/api/contacts` | JWT | Add emergency contact & send opt-in alert[cite: 3, 9] |
 | `DELETE` | `/api/contacts/<id>` | JWT | Remove an emergency contact[cite: 3, 9] |
-| `POST` | `/api/sos/trigger` | JWT | Dispatch SOS alerts with GPS & voice transcript[cite: 3, 9] |
+| `POST` | `/api/sos/trigger` | JWT | Dispatch SOS alerts after 5-second buffer with GPS & voice transcript[cite: 3, 9] |
 | `POST` | `/api/sos/cancel` | JWT | Notify contacts that user is safe[cite: 3, 9] |
 | `POST` | `/api/chat` | JWT | Send message to Prahari Gemini AI Assistant[cite: 3] |
 | `GET` | `/api/health` | Public | Check server, SMS provider & Gemini model status[cite: 3] |
