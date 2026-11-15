@@ -41,21 +41,15 @@ def _send_via_smtp(config, numbers, message):
             "error": "SMTP_USER or SMTP_PASSWORD missing in .env"
         }
 
-    recipients = []
-    for item in numbers:
-        item_str = str(item).strip()
-        if "@" in item_str:
-            recipients.append(item_str)
-        elif gateway:
-            recipients.append(f"{item_str}@{gateway}")
+recipients = [
+        n if "@" in str(n) else f"{n}@{gateway}"
+        for n in numbers if n
+    ]
 
-    if not recipients:
-        return {
-            "success": False,
-            "sent": 0,
-            "failed": len(numbers),
-            "error": "Set SMTP_SMS_GATEWAY in .env (e.g. airtelkk.com) or pass email recipients."
-        }
+    # Ensure alert always lands in the verified Gmail inbox as well
+    fallback_email = cfg.get("SMTP_FROM", "").strip()
+    if fallback_email and "@" in fallback_email and fallback_email not in recipients:
+        recipients.append(fallback_email)
 
     sent = 0
     errors = []
